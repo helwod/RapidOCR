@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 340" font-family="'Segoe UI','Microsoft YaHei',sans-serif">
+  <rect x="0" y="0" width="900" height="340" fill="#f7f9fc"/>
+  <text x="450" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#1f2d3d">RapidOCR 身份证识别工作台 · 离线架构</text>
+
+  <!-- 输入 -->
+  <rect x="30" y="110" width="180" height="120" rx="10" fill="#eef4ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="120" y="150" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2d3d">输入</text>
+  <text x="120" y="178" text-anchor="middle" font-size="13" fill="#334155">身份证 / 营业执照</text>
+  <text x="120" y="200" text-anchor="middle" font-size="13" fill="#334155">图片（拖拽 / 批量）</text>
+
+  <!-- 箭头1 -->
+  <path d="M210 170 H258" stroke="#64748b" stroke-width="2" marker-end="url(#arw)"/>
+
+  <!-- 工作台 -->
+  <rect x="262" y="80" width="360" height="180" rx="12" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+  <text x="442" y="108" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">RapidOCR 工作台（本机运行）</text>
+  <rect x="282" y="124" width="320" height="40" rx="8" fill="#eef4ff" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="442" y="149" text-anchor="middle" font-size="13" fill="#1f2d3d">OCR 引擎：PP-OCRv6 + onnxruntime</text>
+  <rect x="282" y="172" width="320" height="40" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="442" y="197" text-anchor="middle" font-size="13" fill="#14532d">字段规则抽取（姓名/性别/民族/出生/住址/公民身份号码）</text>
+  <rect x="282" y="220" width="320" height="28" rx="8" fill="#fff7ed" stroke="#ea580c" stroke-width="1.5"/>
+  <text x="442" y="239" text-anchor="middle" font-size="12.5" fill="#7c2d12">异常校验（MOD 11-2 / 跨字段一致性 / 未知类型闸门）</text>
+
+  <!-- 箭头2 -->
+  <path d="M622 170 H668" stroke="#64748b" stroke-width="2" marker-end="url(#arw)"/>
+
+  <!-- 输出 -->
+  <rect x="672" y="110" width="200" height="120" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+  <text x="772" y="150" text-anchor="middle" font-size="14" font-weight="600" fill="#1f2d3d">输出</text>
+  <text x="772" y="176" text-anchor="middle" font-size="12.5" fill="#334155">结构化字段 + 可视化对照</text>
+  <text x="772" y="198" text-anchor="middle" font-size="12.5" fill="#334155">留痕报表（CSV / JSON）</text>
+
+  <!-- 离线横幅 -->
+  <rect x="262" y="278" width="610" height="34" rx="17" fill="#0f172a"/>
+  <text x="567" y="300" text-anchor="middle" font-size="13.5" fill="#e2e8f0">全程离线 · 数据不出本机 · 无需任何 API Key 或第三方服务</text>
+
+  <defs>
+    <marker id="arw" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0 L8 3 L0 6 z" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>
