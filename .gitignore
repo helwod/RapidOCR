@@ -16,6 +16,7 @@ __pycache__/
 
 # 运行期生成（模型 / 缓存 / 记录 / 日志 / 配置）
 models/**/*.onnx
+models/runtime_config.yaml
 static/cache/
 store.json
 store.json.bak_*
