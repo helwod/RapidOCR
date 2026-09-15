@@ -1,0 +1,4 @@
+﻿_source,doc_type,name,sex,nation,birth,address,id_number,type,legal_person,capital,establish_date,usci,scope,_fill_rate
+card_badsum.png,id_card,李娜,女,汉,1988-03-20,上海市浦东新区世纪大道100号,31011519880320042X,,,,,,,6/6
+card_noaddr.png,id_card,王芳,女,回,1995-11-08,,110108199511083024,,,,,,,5/6
+card_valid.png,id_card,张伟,男,汉,1990-05-12,北京市海淀区中关村南大街5号院3号楼,110108199005123716,,,,,,,6/6

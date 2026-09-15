@@ -1,0 +1,44 @@
+# 虚拟环境
+.venv/
+.venv313/
+venv/
+
+# 打包产物与发行包
+build/
+dist/
+release/
+*.spec.bak
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# 运行期生成（模型 / 缓存 / 记录 / 日志 / 配置）
+models/**/*.onnx
+static/cache/
+store.json
+store.json.bak_*
+settings.json
+*.log
+crash.log
+
+# 测试临时目录与文件
+test_batch_out/
+output/
+.batch.json
+.batch_detail.json
+.correct.json
+.ocr_*.json
+.tmp_*.js
+.index_served.html
+*_smoke_test.py
+
+# WorkBuddy 项目数据（含会话记忆）
+.workbuddy/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

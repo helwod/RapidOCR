@@ -1,0 +1,57 @@
+[
+  {
+    "doc_type": "id_card",
+    "name": "李娜",
+    "sex": "女",
+    "nation": "汉",
+    "birth": "1988-03-20",
+    "address": "上海市浦东新区世纪大道100号",
+    "id_number": "31011519880320042X",
+    "_fill_rate": "6/6",
+    "_source": "card_badsum.png",
+    "issues": [
+      {
+        "field": "id_number",
+        "severity": "high",
+        "type": "checksum",
+        "msg": "身份证号校验位错误",
+        "suggest": "310115198803200428"
+      }
+    ],
+    "_vis": "vis_card_badsum.png"
+  },
+  {
+    "doc_type": "id_card",
+    "name": "王芳",
+    "sex": "女",
+    "nation": "回",
+    "birth": "1995-11-08",
+    "address": null,
+    "id_number": "110108199511083024",
+    "_fill_rate": "5/6",
+    "_source": "card_noaddr.png",
+    "issues": [
+      {
+        "field": "address",
+        "severity": "high",
+        "type": "missing",
+        "msg": "缺失字段：address",
+        "suggest": null
+      }
+    ],
+    "_vis": "vis_card_noaddr.png"
+  },
+  {
+    "doc_type": "id_card",
+    "name": "张伟",
+    "sex": "男",
+    "nation": "汉",
+    "birth": "1990-05-12",
+    "address": "北京市海淀区中关村南大街5号院3号楼",
+    "id_number": "110108199005123716",
+    "_fill_rate": "6/6",
+    "_source": "card_valid.png",
+    "issues": [],
+    "_vis": "vis_card_valid.png"
+  }
+]

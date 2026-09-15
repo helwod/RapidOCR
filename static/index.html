@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="zh" data-page-node-id="hARyh45iRTukBF58gbgUwv">
+<head data-page-node-id="r93rvMDZw9wwNKfQg9Tv6Y">
+<meta charset="utf-8" data-page-node-id="ReteXAnvpsqMkw48AgATV8">
+<meta name="viewport" content="width=device-width, initial-scale=1" data-page-node-id="r0zpjCcEtaGiGrbtFyFRrt">
+<title>RapidOCR 可视化校对工作台</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --panel:#fff; --line:#e2e5ea; --ink:#1f2329; --muted:#8a9099;
+    --brand:#2563eb; --err:#d92d20; --errbg:#fdecec; --warn:#b7791f; --warnbg:#fff7e6;
+    --ok:#0f9d58; --okbg:#e9f7ef; --info:#2563eb; --infobg:#eaf1fe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  header{padding:14px 20px;background:var(--brand);color:#fff;display:flex;align-items:center;gap:12px}
+  header h1{font-size:17px;margin:0;font-weight:600}
+  header .sub{font-size:12px;opacity:.85}
+  .tabs{display:flex;gap:6px;padding:10px 20px 0;background:var(--bg)}
+  .tab{padding:8px 16px;border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;
+       background:#eceef1;cursor:pointer;color:var(--muted)}
+  .tab.active{background:var(--panel);color:var(--ink);font-weight:600}
+  .view{padding:18px 20px;display:none}
+  .view.active{display:block}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+  .panel h2{margin:0 0 12px;font-size:15px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  button{background:var(--brand);color:#fff;border:none;padding:8px 14px;border-radius:8px;
+         cursor:pointer;font-size:13px}
+  button.ghost{background:#eceef1;color:var(--ink)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  input[type=text],input[type=file]{font-size:13px}
+  input[type=text]{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;
+                   font-family:inherit}
+  .grid2{display:grid;grid-template-columns:minmax(320px,1fr) minmax(420px,1.4fr);gap:16px}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr}}
+  .viswrap{background:#111;display:flex;align-items:center;justify-content:center;border-radius:8px;min-height:200px;overflow:auto}
+  .viswrap img{max-width:100%;display:block}
+  .meta{display:flex;gap:18px;margin-bottom:10px;color:var(--muted)}
+  .meta b{color:var(--ink)}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:#f2f4f7}
+  tr.ok td:first-child{box-shadow:inset 3px 0 0 var(--ok)}
+  tr.warn td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+  tr.err td:first-child{box-shadow:inset 3px 0 0 var(--err);background:var(--errbg)}
+  .badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600}
+  .badge.ok{background:var(--okbg);color:var(--ok)}
+  .badge.warn{background:var(--warnbg);color:var(--warn)}
+  .badge.err{background:var(--errbg);color:var(--err)}
+  .badge.info{background:var(--infobg);color:var(--info)}
+  .issue{padding:8px 10px;border-radius:8px;margin-bottom:8px;border:1px solid var(--line)}
+  .issue.err{background:var(--errbg);border-color:#f3c2bd}
+  .issue.warn{background:var(--warnbg);border-color:#f0dcae}
+  .issue b{margin-right:6px}
+  .ok-line{color:var(--ok);font-weight:600}
+  .hint{color:var(--muted);font-size:12px;margin-top:6px}
+  .row-click{cursor:pointer}
+  .row-click:hover{background:#f0f4ff}
+  .empty{color:var(--muted);padding:24px;text-align:center}
+  .err-banner{background:var(--errbg);color:var(--err);padding:10px 14px;border-radius:8px;margin-bottom:12px}
+</style>
+</head>
+<body data-page-node-id="lwmsP7RxBXbHeWPrUeUuwE">
+<header data-page-node-id="GofuPsu8JWClvHIFrlbO7g">
+  <h1 data-page-node-id="VkZs4bnWDePUkEMbwziICx">RapidOCR 可视化校对工作台</h1>
+  <span class="sub" data-page-node-id="PTJzYeGbbdD3zSXF4637gS">离线 · 文字识别 + 证件字段抽取 + 异常校对</span>
+</header>
+
+<div class="tabs" data-page-node-id="En66eyUnV6bGwogMGL5uU6">
+  <div class="tab active" data-tab="single" data-page-node-id="gXXOjviDFWDn7nXy8HreKR">单图模式</div>
+  <div class="tab" data-tab="batch" data-page-node-id="eqL69iDGSFFx8AQzeb3ab0">批量模式</div>
+  <div class="tab" data-tab="records" data-page-node-id="oa3TKbtJjP0guzXG8dcqeh">识别记录</div>
+  <div class="tab" data-tab="settings" data-page-node-id="h4UOjCaHHA4LxNxt8vuYko">设置</div>
+</div>
+
+<!-- ===================== 单图模式 ===================== -->
+<section class="view active" id="view-single" data-page-node-id="Ub6AtF0avZ4bgUOfWOueDx">
+  <div class="panel" data-page-node-id="oZcdJum5GQA94eM6H4wwQm">
+    <h2 data-page-node-id="Y1LRusBvWEfvjOCMcn5CrJ">上传证件图片</h2>
+    <div class="toolbar" data-page-node-id="dQ7KDqEPECPnUCRn6XBKsm">
+      <input type="file" id="singleFile" accept="image/*" data-page-node-id="jRptW6p3DYcxPcXxdFteds">
+      <button id="btnOcr" data-page-node-id="cxfXSe1SDRMNKaLlE8rH4Q">识别并抽取字段</button>
+      <span class="hint" data-page-node-id="fhkDAegHkjefc5SdhgHuU3">支持身份证 / 营业执照（png · jpg · bmp · tif）</span>
+    </div>
+    <div id="singleError" data-page-node-id="HLzaN2V8wpyCdaJhxoMdyk"></div>
+  </div>
+
+  <div id="singleResult" style="display:none" data-page-node-id="VAaXzn1AF6DKkVt3l3GE8o">
+    <div class="grid2" data-page-node-id="0TKBZ4orIG68i9kTCwo67A">
+      <div class="panel" data-page-node-id="tUsXEAoKW2nNc1Xypfvzky">
+        <h2 data-page-node-id="eLQmLYq8mqwvYkFHqvZrmD">原图 + OCR 检测框</h2>
+        <div class="viswrap" data-page-node-id="gamAFHxZKokd45Zns65f8A"><img id="visImg" alt="可视化" data-page-node-id="P3zu717xN09EVEkERDMhQH"></div>
+      </div>
+      <div class="panel" data-page-node-id="mCmxztX6i6Cq0mOyP9o2ay">
+        <h2 data-page-node-id="NvquOeERU9FFtWp5h4rwW2">抽取字段（可编辑）</h2>
+        <div class="meta" data-page-node-id="Lqq1ZlsON1Ju65uMY9ypNd">
+          <div data-page-node-id="4QUvFzZFKlO6HAZC8JTIb6">证件类型：<b id="docType" data-page-node-id="4kcmspP5qbY6k0hr9pM8Sr">-</b></div>
+          <div data-page-node-id="xO6SL8Qfb8RCE6XFZ2Phr4">填充率：<b id="fillRate" data-page-node-id="9gucZn6B81w9qTP5SQG6Oo">-</b></div>
+        </div>
+        <table data-page-node-id="edC0zlb1GtvnV2HmaN2aB7">
+          <thead data-page-node-id="i4VcVsqN7yazzF8mupUKRY"><tr data-page-node-id="NHERkVuH83XqKvNVNVWhtd"><th style="width:110px" data-page-node-id="by2pWRKhmod2surqkBLT4L">字段</th><th data-page-node-id="X7moBQCXhO2IFNRBLCR3u4">值（可编辑）</th><th style="width:84px" data-page-node-id="gny3SSHBTIr21ISDPzBh3L">来源</th><th data-page-node-id="dxPqW5EJd2sy3KV64zFmBc">状态 / 异常</th></tr></thead>
+          <tbody id="fieldBody" data-page-node-id="3yA6iYOBY4nx5DZWaJcCh9"></tbody>
+        </table>
+        <div class="toolbar" style="margin-top:12px" data-page-node-id="3kL5w9AgHMQwtFfa9aWVD7">
+          <button id="btnReval" data-page-node-id="sY9gVJU3UJ8jEm7HmiIf1p">重新校验</button>
+          <button id="btnCorrect" class="ghost" data-page-node-id="eYCpT4FNJ7wGvDcC9WcRRn">应用修正</button>
+          <button id="btnDownload" class="ghost" data-page-node-id="gZ1l8OMFTgsQ56jlX3HEOE">保存结果 JSON</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" data-page-node-id="2tpaZtCduCMw6af2wof4GL">
+      <h2 data-page-node-id="IDN8wy95gJRpOeHGBhMFED">异常校对面板</h2>
+      <div id="issuePanel" data-page-node-id="dYdVCxvyVrwassHjyW2mxH"><div class="empty" data-page-node-id="HXQjtkQ8CHCE1PK2ylWCKu">暂无数据</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 批量模式 ===================== -->
+<section class="view" id="view-batch" data-page-node-id="G249mEu0UGG8dG03sBZtSH">
+  <div class="panel" data-page-node-id="PORguTNVIvxgL9RN4NPUvt">
+    <h2 data-page-node-id="Xk9TZ60l4hoThtuDztNBzq">批量抽取</h2>
+    <div class="toolbar" data-page-node-id="15YpQDt8ntv59pGUvDKYxB">
+      <label data-page-node-id="0tq8ropSjSbgD3uSJPPYqM">本地文件夹：<input type="text" id="batchDir" style="width:300px" placeholder="点右侧『浏览…』选目录，或手填绝对路径（如 C:/Users/.../batch_in）" data-page-node-id="drzlLBN9BvWGAJnBJWwymT"></label>
+      <button type="button" id="btnBrowseDir" data-page-node-id="brz1">浏览…</button>
+      <span id="batchDirPath" class="hint" style="margin-left:6px"></span>
+      <label data-page-node-id="Fs7zEoxjfB9UeHc8s0VAQR">或补充单张/多张图片（可选）：<input type="file" id="batchFiles" accept="image/*" multiple data-page-node-id="8H0UAEVxY9jSgcXRnjmJON"></label>
+      <button id="btnBatch" data-page-node-id="UwFQWxhUU3pLpwgdYbTgEe">运行批量</button>
+    </div>
+    <div id="batchError" data-page-node-id="pYnK7w9yN0YGzxsd1ifzLl"></div>
+    <div id="batchProgress" style="display:none;margin:8px 0 4px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#444;margin-bottom:4px">
+        <span id="batchProgressText">识别中…</span>
+        <span id="batchProgressPct">0%</span>
+      </div>
+      <div style="height:12px;background:#eee;border-radius:6px;overflow:hidden">
+        <div id="batchProgressBar" style="height:100%;width:0;background:#3a8d40;transition:width .2s"></div>
+      </div>
+      <div id="batchProgressCur" class="hint" style="margin-top:4px"></div>
+    </div>
+    <div class="hint" data-page-node-id="7FvZBZYPeV5AEN73mFU3ht">两种来源任选：① 点『浏览…』，用 Windows 文件夹窗口选择目录，选好后路径自动填入左侧（服务器直接递归扫描该目录，不逐张上传、保留原文件名与路径）② 直接多选图片上传。同时提供则目录与图片都处理。</div>
+  </div>
+
+  <div class="panel" id="batchSummaryPanel" style="display:none" data-page-node-id="gG5jUdPhr2SduPhOFJYdpH">
+    <h2 data-page-node-id="fWPqZkm1XhJN6gqnliGO6o">汇总结果 <span id="batchMeta" class="hint" data-page-node-id="4K4WymbcUkUE3Kj6WCR654"></span></h2>
+    <div class="toolbar" data-page-node-id="C23PDC1O9rWRqyOZrCQP55">
+      <label style="display:inline-flex;align-items:center;gap:4px;font-size:13px" data-page-node-id="yS1bRUcYv13O4bDBY5j2LB"><input type="checkbox" id="batchOnlyIssue" data-page-node-id="ub4LV8R5kfvImROzanwjMv"> 仅显示识别异常的图片</label>
+      <label style="display:inline-flex;align-items:center;gap:4px;font-size:13px" data-page-node-id="Sgya2vG6T9jy3Ar1ms8zzi"><input type="checkbox" id="batchOnlyUnknown" data-page-node-id="HQL0tYZmxMb1GNnueal7JN"> 仅显示未知类型的图片</label>
+    </div>
+    <table data-page-node-id="ZvOEIHzM52vEFYcCRDhtXr">
+      <thead data-page-node-id="9KFzh4ZcVemjQX4fUGMzol"><tr data-page-node-id="qdkuoJXt2orQT36WKH2ETp"><th data-page-node-id="b8GKjEbnVCvsyDZ9TtP2Aw">文件</th><th data-page-node-id="5wKsFCno83EpaPDxvEnMDD">类型</th><th data-page-node-id="rVh73XkXtIXynVA92rt3j2">填充率</th><th data-page-node-id="lrgmefxBUqEY85NdQS5Qci">异常数</th><th data-page-node-id="GxzS372HBzGo2xEk79iDwQ">异常类型</th><th data-page-node-id="1aBI0jNcCBEKgADZUYCsnk">可视化</th></tr></thead>
+      <tbody id="batchBody" data-page-node-id="xI5ml6BcvIy6QaDEKfJIOd"></tbody>
+    </table>
+    <div class="hint" data-page-node-id="HGXnuj6gTEWE52EX0H2Nh4">点击任意行查看单张详情（字段可编辑、可重新校验）。</div>
+  </div>
+
+  <div id="batchDetail" data-page-node-id="osCNdkU6aEUxDgK0MQoPdG"></div>
+
+</section>
+
+<!-- ===================== 识别记录 ===================== -->
+<section class="view" id="view-records" data-page-node-id="YqK5zp1xcJoGGACeT2VBcW">
+  <div class="panel" data-page-node-id="pHuRrrwd1DLisTziKPVipu">
+    <h2 data-page-node-id="7UBcy7I4sVMlOpwW0MKHhl">识别记录</h2>
+    <div class="toolbar" data-page-node-id="n9Adm6nbdikzEOiPPAH7u5">
+      <button id="btnRefreshRecords" class="ghost" data-page-node-id="V9d8juRC2N1mBITnJ8WnE2">刷新</button>
+      <button id="btnClearRecords" class="ghost" data-page-node-id="syVlSQHxhHukKAniIA9zsn">清空全部</button>
+      <label style="display:inline-flex;align-items:center;gap:4px;font-size:13px" data-page-node-id="JSxvUTaws7tGUm6kNFc4xg"><input type="checkbox" id="chkOnlyIssue" data-page-node-id="fH8HCzP3qFKGjb9thnADl9"> 仅显示有识别异常</label>
+      <span class="hint" data-page-node-id="6ilay3hIJjR24w3GvYax3s">记录已持久化（刷新/重启不丢）；可逐条预览/删除、清空或导出 CSV。</span>
+    </div>
+    <div id="recordsError" data-page-node-id="M93evRiGsFy53j7GoxFMTw"></div>
+  </div>
+
+  <div id="recordDetail" data-page-node-id="5KrNMHsGRpZlbOJotyCrn1"></div>
+
+  <div class="panel" data-page-node-id="OBsbcjsEHE7oMXXSRCZyLa">
+    <h2 data-page-node-id="p6wc5f7xhvEwCgb44tgoO6">单图识别记录</h2>
+    <div class="toolbar" data-page-node-id="URpfWCjiJWY8Vz0KLt8LXw"><button id="btnExportSingle" class="ghost" data-page-node-id="INN1aoufE1zYzTBcVhi5h1">导出单图 CSV</button></div>
+    <div id="singleRecords" data-page-node-id="nEgRhXzOYn8wJrjJR6MJAL"></div>
+  </div>
+
+  <div class="panel" data-page-node-id="vxdhYuTHPWFYj4GTNG7mdC">
+    <h2 data-page-node-id="mLPdFuGcTGGzWOI2MwrzrD">批量识别记录</h2>
+    <div id="batchRecords" data-page-node-id="0y5EF14JlsbdZS1Uw7kIMI"></div>
+  </div>
+</section>
+
+<!-- ===================== 设置 ===================== -->
+<section class="view" id="view-settings" data-page-node-id="ygjLsfiCv7stiP66EGwupW">
+  <div class="panel" data-page-node-id="RxhVhrFqlzAO5EDhjYyUzB">
+    <h2 data-page-node-id="AIwnspghSEOpbjJ4kZxBrj">推理设置</h2>
+    <div class="toolbar" style="gap:18px" data-page-node-id="TVhYF4GwNx40ZqRDE4Ziym">
+      <label data-page-node-id="cFgjPxAnVuPRiYTKRQVrvM"><input type="checkbox" id="setUseDet" data-page-node-id="r9Gk5GycSofceuwEyCyG4C"> 检测</label>
+      <label data-page-node-id="1Wy69jTu7AsVLNDKaGwMmD"><input type="checkbox" id="setUseCls" data-page-node-id="CEN43x44CKz7MGKphTGaAo"> 分类</label>
+      <label data-page-node-id="cKC1FNHz6KTFg2EG1dApmv"><input type="checkbox" id="setUseRec" data-page-node-id="KSExB06EC3T80BzzABXbyG"> 识别</label>
+      <label data-page-node-id="ajGftkecgsuqDNIxjBLJ8t">文字置信度阈值：<input type="range" id="setScore" min="0.1" max="0.9" step="0.05" style="vertical-align:middle" data-page-node-id="hTAxatOxfCYKpz5dJUDecX"><b id="setScoreVal" data-page-node-id="koCqQ6MdNaGXL7cLyz8Htr">0.5</b></label>
+    </div>
+    <div class="toolbar" style="gap:18px;margin-top:6px" data-page-node-id="vlloWhPVGF2sI8BA40WhXo">
+      <label data-page-node-id="R4rC6ITqUqBOwXGQ9JrAd7">intra_op 线程：<input type="text" id="setIntra" style="width:70px" data-page-node-id="tapwksRhNksOjP1ho207Bq"></label>
+      <label data-page-node-id="zOL0m0ed8XGCDnh2H4eX64">inter_op 线程：<input type="text" id="setInter" style="width:70px" data-page-node-id="76Tea9TqbCmPGiQuFWlOJh"></label>
+    </div>
+    <div class="toolbar" style="margin-top:12px" data-page-node-id="JkRYR8bUAMpLvAxVryCchc">
+      <button id="btnApplySettings" data-page-node-id="1xyTk5XIIyONAK61gRfJxW">应用设置并重新加载引擎</button>
+      <span class="hint" data-page-node-id="Ic9mztWKPgpFiJ7yHnbRv7">修改后需点击此按钮才会生效（重建 RapidOCR 引擎）。</span>
+    </div>
+    <div id="settingsStatus" data-page-node-id="FWySblYrZ4K1Q1vGO1qg76"></div>
+  </div>
+
+  <div class="panel" data-page-node-id="3Ukc38r5bXEAthvEN2OvgW">
+    <h2 data-page-node-id="Ag9jH4hvP3IlQDQkcTtQF5">模型选择（检测 / 识别 / 分类）</h2>
+    <div class="toolbar" style="gap:18px" data-page-node-id="QACiftEK8kTH5DmbjhKS2v">
+      <label data-page-node-id="HvWo3Tr8Ylh19UZux8d7bW">检测模型：<select id="selDet" style="max-width:340px" data-page-node-id="L0bfJMT0pX8gkpYYcAyHYK"></select></label>
+      <label data-page-node-id="UFhge6dqHncU36PAkDZM3K">识别模型：<select id="selRec" style="max-width:340px" data-page-node-id="YoArPsS5JME6sAI0UcjTE3"></select></label>
+      <label data-page-node-id="nmJblElPgHVhVp29cecQVA">分类模型：<select id="selCls" style="max-width:340px" data-page-node-id="MvtUtXx2P049gYqWMmEQ30"></select></label>
+    </div>
+    <div class="toolbar" style="margin-top:8px" data-page-node-id="R2Ets5R2gbwblat6DHxxMw">
+      <button id="btnApplyModels" class="ghost" data-page-node-id="CPf4NfOpnRp22CGQrQZiT8">套用所选模型并重新加载</button>
+      <span class="hint" data-page-node-id="DoEl9p7cvPQKUveFT1DhGX">下拉项含「本地」者为已下载，可直接选用；远程模型请先在下方模型库下载。留空 = 使用内置默认模型（PP-OCRv6）。</span>
+    </div>
+    <div class="toolbar" style="margin-top:8px" data-page-node-id="bDZRQkJVuvS1Bivkq24tDO">
+      <span data-page-node-id="mQyEjRg97HbErSuyH6wI5k">快速预设：</span>
+      <span id="presetBtns" data-page-node-id="f5ZGrcPEbgglGBOQMOGJIe"></span>
+    </div>
+    <div id="modelApplyStatus" data-page-node-id="JiWvOZLoiMSGhPgFUynagc"></div>
+  </div>
+
+  <div class="panel" data-page-node-id="JM12E7shHLIlmJyFkwUXaH">
+    <h2 data-page-node-id="3G9KIaQXqdz7cwR4e2fARM">模型库（onnxruntime · 官方 ModelScope）</h2>
+    <div class="hint" data-page-node-id="NIxKwSl5Yj7yXPlM6Ouy3p">
+      模型来源：RapidOCR 官方 ModelScope 仓库（本工具仅列出 onnxruntime 引擎可用模型）。
+      <a id="modelRepoLink" href="https://www.modelscope.cn/models/RapidAI/RapidOCR" target="_blank" rel="noopener" style="color:var(--brand)" data-page-node-id="G3u5OviTXpCmlBnCyS2gTW">打开模型库远程页面</a>
+    </div>
+    <div id="modelIntro" style="margin:10px 0;font-size:13px;color:var(--muted);line-height:1.7" data-page-node-id="G34BYlV7nqJcUKUvsL9GKZ"></div>
+    <div id="modelLib" style="margin-top:6px" data-page-node-id="CESNgZxCY7ZLogYuC6iGFF"></div>
+  </div>
+
+  <div class="panel" data-page-node-id="MDVryunwfCFyVgw8RjhG8o">
+    <h2 data-page-node-id="CJDqrr5tSg2E9cvXaVKqmx">当前引擎状态</h2>
+    <div id="engineStatus" data-page-node-id="xnehc4jOTL15z0cZibsoAe"></div>
+  </div>
+</section>
+
+<script>
+"use strict";
+function $(s){return document.querySelector(s);}
+function esc(v){
+  if(v===null||v===undefined) return "";
+  return String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+const state = { current:null, lastBatch:null };
+
+/* ---------- Tab 切换 ---------- */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    $("#view-"+t.dataset.tab).classList.add("active");
+  });
+});
+
+/* ---------- 单图：识别 ---------- */
+$("#btnOcr").addEventListener("click", async ()=>{
+  const f = $("#singleFile").files[0];
+  if(!f){ showErr("#singleError","请先选择一张图片"); return; }
+  clearErr("#singleError");
+  const fd = new FormData(); fd.append("file", f); fd.append("doc_type","auto");
+  try{
+    const r = await fetch("/api/ocr",{method:"POST",body:fd});
+    if(!r.ok) throw new Error((await r.json()).detail||("HTTP "+r.status));
+    const j = await r.json();
+    renderRecord(j);
+  }catch(e){ showErr("#singleError","识别失败："+e.message); }
+});
+
+/* ---------- 渲染记录（单图 / 批量详情共用） ---------- */
+function renderRecord(j){
+  state.current = j;
+  $("#singleResult").style.display = "block";
+  $("#visImg").src = j.vis_url || "";
+  $("#docType").textContent = j.doc_type||"-";
+  $("#fillRate").textContent = j.fill_rate||"-";
+
+  const issueByField = {};
+  (j.issues||[]).forEach(i=>{ issueByField[i.field] = i; });
+
+  const tb = $("#fieldBody"); tb.innerHTML="";
+  (j.fields||[]).forEach(f=>{
+    const iss = issueByField[f.key];
+    const tr = document.createElement("tr");
+    tr.className = iss ? (iss.severity==="high"?"err":"warn") : "ok";
+    let statusHtml;
+    if(iss){
+      statusHtml = '<span class="badge '+(iss.severity==="high"?"err":"warn")+'">'
+        +esc(iss.msg)+'</span>';
+    }else{
+      statusHtml = '<span class="badge ok">正常</span>';
+    }
+    tr.innerHTML =
+      '<td>'+esc(f.label)+'</td>'+
+      '<td><input type="text" data-key="'+esc(f.key)+'" value="'+esc(f.value)+'"></td>'+
+      '<td><span class="badge '+srcClass(f.source)+'">'+srcLabel(f.source)+'</span></td>'+
+      '<td>'+statusHtml+'</td>';
+    tb.appendChild(tr);
+  });
+
+  const ip = $("#issuePanel"); ip.innerHTML="";
+  if(!j.issues || !j.issues.length){
+    ip.innerHTML = '<div class="ok-line">无异常</div>';
+  }else{
+    j.issues.forEach(i=>{
+      const d = document.createElement("div");
+      d.className = "issue "+(i.severity==="high"?"err":"warn");
+      d.innerHTML = '<b>['+esc(i.type)+' · '+esc(i.field)+']</b> '+esc(i.msg)
+        + (i.suggest!==null && i.suggest!==undefined ? ' <span class="hint">建议：'+esc(i.suggest)+'</span>' : '');
+      ip.appendChild(d);
+    });
+  }
+}
+
+function srcClass(s){ return s==="edited"||s==="llm" ? "info" : (s==="missing"?"warn":"ok"); }
+function srcLabel(s){ return s==="rule"?"规则":s==="llm"?"模型":s==="edited"?"已修正":"缺失"; }
+
+function collectFields(){
+  const out = {};
+  $("#fieldBody").querySelectorAll("input[data-key]").forEach(inp=>{
+    out[inp.dataset.key] = inp.value;
+  });
+  return out;
+}
+
+/* ---------- 重新校验 / 应用修正 ---------- */
+async function revalidate(){
+  if(!state.current) return;
+  const fields = collectFields();
+  try{
+    const r = await fetch("/api/validate",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({id:state.current.id, fields})});
+    if(!r.ok) throw new Error((await r.json()).detail||("HTTP "+r.status));
+    renderRecord(await r.json());
+  }catch(e){ showErr("#singleError","校验失败："+e.message); }
+}
+$("#btnReval").addEventListener("click", revalidate);
+$("#btnCorrect").addEventListener("click", revalidate); // 同一闭环：写回并刷新
+
+/* ---------- 保存结果 JSON ---------- */
+$("#btnDownload").addEventListener("click", ()=>{
+  if(!state.current) return;
+  const payload = {id:state.current.id, doc_type:state.current.doc_type,
+    fill_rate:state.current.fill_rate, fields:collectFields(), issues:state.current.issues};
+  const blob = new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "rapidocr_result_"+state.current.id+".json";
+  a.click();
+});
+
+/* ---------- 批量 ---------- */
+function setBatchProgress(done,total,cur){
+  const pct = total ? Math.round(done*100/total) : 0;
+  $("#batchProgressBar").style.width = pct + "%";
+  $("#batchProgressPct").textContent = pct + "%";
+  $("#batchProgressText").textContent = "识别中… " + done + "/" + total;
+  $("#batchProgressCur").textContent = cur ? ("当前：" + cur) : "";
+}
+$("#btnBatch").addEventListener("click", async ()=>{
+  clearErr("#batchError");
+  const dir = $("#batchDir").value.trim();
+  const files = $("#batchFiles").files;
+  const fd = new FormData(); fd.append("doc_type","auto");
+  if(dir) fd.append("dir_path", dir);
+  for(const f of files) fd.append("files", f);
+  if(!dir && files.length===0){ showErr("#batchError","请提供本地文件夹路径或多张图片"); return; }
+
+  const btn = $("#btnBatch");
+  btn.disabled = true; btn.textContent = "识别中…";
+  $("#batchProgress").style.display = "block";
+  setBatchProgress(0, 0, "");
+  try{
+    const r = await fetch("/api/batch",{method:"POST",body:fd});
+    if(!r.ok) throw new Error((await r.json()).detail||("HTTP "+r.status));
+    const st = await r.json();
+    const jobId = st.job_id;
+    // 轮询进度直到完成/失败
+    for(;;){
+      await new Promise(res=>setTimeout(res,400));
+      const pr = await fetch("/api/batch/progress?job_id="+encodeURIComponent(jobId));
+      if(!pr.ok) throw new Error("进度查询失败 HTTP "+pr.status);
+      const pj = await pr.json();
+      setBatchProgress(pj.done, pj.total, pj.current);
+      if(pj.status === "done") break;
+      if(pj.status === "error") throw new Error(pj.error || "批量处理失败");
+    }
+    const rr = await fetch("/api/batch/result?job_id="+encodeURIComponent(jobId));
+    const rj = await rr.json();
+    if(rj.result) renderBatch(rj.result);
+    else throw new Error(rj.error || "未获取到批量结果");
+  }catch(e){ showErr("#batchError","批量失败："+e.message); }
+  finally{
+    btn.disabled = false; btn.textContent = "运行批量";
+    $("#batchProgressCur").textContent = "";
+  }
+});
+
+/* ---------- 批量：点『浏览…』调 Windows 原生文件夹窗口，选到的绝对路径填入 batchDir ---------- */
+$("#btnBrowseDir").addEventListener("click", async ()=>{
+  const hint = $("#batchDirPath");
+  hint.textContent = "正在打开 Windows 文件夹选择窗口…（请在该窗口中点击选择/取消）";
+  try{
+    const r = await fetch("/api/fs/pick",{method:"POST"});
+    const j = await r.json();
+    if(j && j.path){
+      $("#batchDir").value = j.path;
+      hint.textContent = "已选：" + j.path;
+    }else{
+      hint.textContent = "（已取消选择）";
+    }
+  }catch(e){ hint.textContent = "打开失败：" + e.message; }
+});
+
+let batchOnlyIssue = false;    // 批量结果「仅显示识别异常的图片」筛选状态
+let batchOnlyUnknown = false;  // 批量结果「仅显示未知类型的图片」筛选状态
+function renderBatch(j){
+  state.lastBatch = j;
+  $("#batchSummaryPanel").style.display="block";
+  $("#batchMeta").textContent = "共 "+j.total+" 张，异常 "+j.with_issues+" 张";
+  const tb = $("#batchBody"); tb.innerHTML="";
+  (j.rows||[]).forEach(row=>{
+    if(batchOnlyIssue && !(row.issue_count>0)) return;
+    if(batchOnlyUnknown && row.doc_type !== "unknown") return;
+    const tr = document.createElement("tr");
+    tr.className = "row-click";
+    tr.innerHTML =
+      '<td>'+esc(row.source)+'</td>'+
+      '<td>'+esc(row.doc_type)+'</td>'+
+      '<td>'+esc(row.fill_rate)+'</td>'+
+      '<td>'+(row.issue_count>0?'<span class="badge '+(row.issue_count>0?'err':'ok')+'">'+row.issue_count+'</span>':'0')+'</td>'+
+      '<td>'+(row.issue_types.length?row.issue_types.map(t=>'<span class="badge warn">'+esc(t)+'</span>').join(" "):'<span class="badge ok">无</span>')+'</td>'+
+      '<td>'+(row.vis_url?'<a href="'+esc(row.vis_url)+'" target="_blank">查看图</a>':'-')+'</td>';
+    tr.addEventListener("click", ()=>loadDetail(row));
+    tb.appendChild(tr);
+  });
+}
+
+function fillDetailBody(j){
+  const issueByField = {}; (j.issues||[]).forEach(i=>issueByField[i.field]=i);
+  const btb = $("#bdBody"); btb.innerHTML="";
+  (j.fields||[]).forEach(f=>{
+    const iss = issueByField[f.key];
+    const tr = document.createElement("tr");
+    tr.className = iss ? (iss.severity==="high"?"err":"warn") : "ok";
+    tr.innerHTML = '<td>'+esc(f.label)+'</td>'+
+      '<td><input type="text" data-key="'+esc(f.key)+'" value="'+esc(f.value==null?"":f.value)+'"></td>'+
+      '<td><span class="badge '+srcClass(f.source)+'">'+srcLabel(f.source)+'</span></td>'+
+      '<td>'+(iss?'<span class="badge '+(iss.severity==="high"?"err":"warn")+'">'+esc(iss.msg)+'</span>':'<span class="badge ok">正常</span>')+'</td>';
+    btb.appendChild(tr);
+  });
+  const bi = $("#bdIssues");
+  if(!j.issues||!j.issues.length) bi.innerHTML='<div class="ok-line">无异常</div>';
+  else { bi.innerHTML=""; j.issues.forEach(i=>{
+      const d=document.createElement("div"); d.className="issue "+(i.severity==="high"?"err":"warn");
+      d.innerHTML='<b>['+esc(i.type)+' · '+esc(i.field)+']</b> '+esc(i.msg)+
+        (i.suggest!==null&&i.suggest!==undefined?' <span class="hint">建议：'+esc(i.suggest)+'</span>':'');
+      bi.appendChild(d);
+    });
+  }
+}
+
+async function loadDetail(row){
+  try{
+    const r = await fetch("/api/batch_detail",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({batch_id:row.id.split("|")[0], source:row.source})});
+    if(!r.ok) throw new Error((await r.json()).detail||("HTTP "+r.status));
+    let j = await r.json();
+    const box = $("#batchDetail");
+    box.innerHTML =
+      '<div class="panel"><h2>详情：'+esc(row.source)+'</h2>'+
+      '<div class="grid2">'+
+        '<div><div class="viswrap"><img src="'+esc(j.vis_url||"")+'" alt="可视化"></div></div>'+
+        '<div><div class="meta"><div>证件类型：<b>'+esc(j.doc_type)+'</b></div><div>填充率：<b>'+esc(j.fill_rate)+'</b></div></div>'+
+          '<table><thead><tr><th style="width:110px">字段</th><th>值</th><th style="width:84px">来源</th><th>状态</th></tr></thead>'+
+          '<tbody id="bdBody"></tbody></table>'+
+          '<div class="toolbar" style="margin-top:10px"><button id="bdReval">重新校验</button></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="panel"><h2>异常校对</h2><div id="bdIssues"></div></div>'+
+      '</div>';
+    fillDetailBody(j);
+    $("#bdReval").addEventListener("click", async ()=>{
+      const fields={}; $("#bdBody").querySelectorAll("input[data-key]").forEach(inp=>fields[inp.dataset.key]=inp.value);
+      const r2 = await fetch("/api/validate",{method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id:j.id, fields})});
+      if(r2.ok){ j = await r2.json(); fillDetailBody(j); }
+    });
+  }catch(e){ showErr("#batchError","详情加载失败："+e.message); }
+}
+
+/* ---------- 批量结果筛选：仅显示识别异常的图片 / 仅显示未知类型的图片 ---------- */
+$("#batchOnlyIssue").addEventListener("change", e=>{
+  batchOnlyIssue = e.target.checked;
+  if(state.lastBatch) renderBatch(state.lastBatch);
+});
+$("#batchOnlyUnknown").addEventListener("change", e=>{
+  batchOnlyUnknown = e.target.checked;
+  if(state.lastBatch) renderBatch(state.lastBatch);
+});
+
+/* ---------- 设置：加载 / 渲染 ---------- */
+const SETTINGS = { data:null };
+
+async function loadSettings(){
+  try{
+    const r = await fetch("/api/settings");
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    SETTINGS.data = await r.json();
+    renderSettings();
+  }catch(e){ showErr("#settingsStatus","加载设置失败："+e.message); }
+}
+
+function renderSettings(){
+  const d = SETTINGS.data; if(!d) return;
+  const inf = d.settings.inference, sel = d.settings.selected;
+  $("#setUseDet").checked = !!inf.use_det;
+  $("#setUseCls").checked = !!inf.use_cls;
+  $("#setUseRec").checked = !!inf.use_rec;
+  $("#setScore").value = inf.text_score; $("#setScoreVal").textContent = inf.text_score;
+  $("#setIntra").value = inf.intra_op_num_threads;
+  $("#setInter").value = inf.inter_op_num_threads;
+
+  // 模型选择下拉
+  fillModelSelect($("#selDet"), "det", sel.det, d.catalog);
+  fillModelSelect($("#selRec"), "rec", sel.rec, d.catalog);
+  fillModelSelect($("#selCls"), "cls", sel.cls, d.catalog);
+
+  // 预设按钮
+  const pb = $("#presetBtns"); pb.innerHTML="";
+  (d.presets||[]).forEach(p=>{
+    const b = document.createElement("button");
+    b.className="ghost"; b.textContent=p.name; b.style.marginRight="6px";
+    b.addEventListener("click", ()=>applyPreset(p.id));
+    pb.appendChild(b);
+  });
+
+  $("#modelRepoLink").href = d.repo_url || "https://www.modelscope.cn/models/RapidAI/RapidOCR";
+  MODEL_VERSION_NOTES = d.version_notes || {};
+  renderModelLib(d.catalog);
+  renderEngineStatus(d.engine);
+}
+
+function fillModelSelect(sel, task, current, catalog){
+  sel.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value=""; opt0.textContent="（默认内置模型）"; sel.appendChild(opt0);
+  const groups = {};
+  catalog.filter(c=>c.task===task).forEach(c=>{
+    (groups[c.ocr_version] = groups[c.ocr_version]||[]).push(c);
+  });
+  Object.keys(groups).forEach(ver=>{
+    const og = document.createElement("optgroup"); og.label = ver;
+    groups[ver].forEach(c=>{
+      const o = document.createElement("option");
+      o.value = c.id;
+      o.textContent = c.name + (c.local ? " [本地]" : " [远程]");
+      if(c.id===current) o.selected = true;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+}
+
+const MODEL_INTRO = "模型按用途分三类，需配套使用：<b>检测(det)</b> 定位文字区域、<b>识别(rec)</b> 将文字转为字符、<b>分类(cls)</b> 纠正文本方向；每类下按版本（PP-OCRv4/v5/v6）细分，识别类涵盖 15 种语种。"
+  + "档位：tiny/small/medium/mobile 为轻量档，server 为高精度大模型；中文默认 small。点击「下载」拉取并做 SHA256 校验；离线可手动将 onnx 放到 models/onnxruntime/&lt;版本&gt;/&lt;任务&gt;/。"
+  + "可用上方「仅看已下载」筛选；点击分区标题可折叠/展开。每个模型标注<b>文件大小</b>（如 4.7 MB），各版本分组下附<b>版本说明</b>。";
+
+let MODEL_VERSION_NOTES = {};
+let modelLocalOnly = false;   // 跨重渲染保持「仅看已下载」筛选状态
+function renderModelLib(catalog){
+  $("#modelIntro").innerHTML = MODEL_INTRO;
+  const box = $("#modelLib"); box.innerHTML="";
+  const total = catalog.length;
+  const localTotal = catalog.filter(c=>c.local).length;
+
+  // 工具栏：统计 + 筛选
+  const bar = document.createElement("div");
+  bar.style.cssText="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap";
+  bar.innerHTML =
+    '<span class="badge info">共 '+total+' 个</span>'+
+    '<span class="badge ok">已下载 '+localTotal+'</span>'+
+    '<label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="modelLocalOnly"'+(modelLocalOnly?' checked':'')+'> 仅看已下载</label>';
+  box.appendChild(bar);
+
+  const cb = $("#modelLocalOnly");
+  cb.checked = modelLocalOnly;
+  cb.addEventListener("change", ()=>{ modelLocalOnly = cb.checked; renderModelLib(catalog); });
+  const onlyLocal = modelLocalOnly;
+
+  const TASKS = [["det","文本检测 (Detection)",false],["rec","文本识别 (Recognition)",true],["cls","方向分类 (Classification)",false]];
+  const VERS = ["PP-OCRv4","PP-OCRv5","PP-OCRv6"];
+
+  TASKS.forEach(([task,title,collapsed])=>{
+    const items = catalog.filter(c=>c.task===task && (!onlyLocal || c.local));
+    if(onlyLocal && items.length===0) return;
+    const content = document.createElement("div");
+    VERS.forEach(ver=>{
+      const vs = items.filter(c=>c.ocr_version===ver);
+      if(vs.length===0) return;
+      const sh = document.createElement("div");
+      sh.style.cssText="margin:8px 0 4px;font-size:12px;color:var(--brand);font-weight:600";
+      sh.textContent = ver+" · "+vs.length+" 个";
+      content.appendChild(sh);
+      const vnote = document.createElement("div");
+      vnote.style.cssText="margin:0 0 6px;font-size:12px;color:var(--muted);line-height:1.5";
+      vnote.textContent = MODEL_VERSION_NOTES[ver] || "";
+      content.appendChild(vnote);
+      vs.forEach(c=> content.appendChild(modelRow(c)));
+    });
+    box.appendChild(makeSection(title+"  ("+items.length+")", content, collapsed && !onlyLocal));
+  });
+}
+
+function fmtSize(b){
+  if(!b || b<=0) return "—";
+  if(b < 1048576) return (b/1024).toFixed(0)+" KB";
+  return (b/1048576).toFixed(1)+" MB";
+}
+
+function fmtTime(iso){
+  if(!iso) return "—";
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return iso;
+  const p = n => (n<10?"0":"")+n;
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+}
+
+function modelRow(c){
+  const row = document.createElement("div");
+  row.style.cssText="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px";
+  const name = document.createElement("span");
+  name.style.cssText="flex:1;font-family:monospace;font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+  name.innerHTML = esc(c.name) + (c.local ? ' <span style="color:var(--ok)">✓本地</span>' : ' <span style="color:var(--muted)">·远程</span>');
+  const lang = document.createElement("span");
+  lang.style.cssText="font-size:12px;padding:1px 8px;border-radius:999px;background:#eef1f6;color:#5b6573;white-space:nowrap";
+  lang.textContent = c.lang_label;
+  const typ = document.createElement("span");
+  typ.style.cssText="font-size:12px;padding:1px 8px;border-radius:999px;background:#eaf1fe;color:#2563eb;white-space:nowrap";
+  typ.textContent = c.type_label;
+  const sz = document.createElement("span");
+  sz.style.cssText="font-size:12px;color:var(--muted);width:76px;text-align:right;white-space:nowrap";
+  sz.textContent = fmtSize(c.size);
+  const prog = document.createElement("span");
+  prog.style.cssText="color:var(--muted);font-size:12px;width:96px";
+  const btn = document.createElement("button");
+  btn.className="ghost"; btn.textContent = c.local ? "已下载" : "下载";
+  btn.disabled = c.local;
+  btn.style.cssText="margin-left:2px";
+  btn.addEventListener("click", ()=>downloadModel(c.id, prog, btn));
+  const link = document.createElement("a");
+  link.href = c.repo_url || "https://www.modelscope.cn/models/RapidAI/RapidOCR";
+  link.target="_blank"; link.rel="noopener";
+  link.style.cssText="font-size:12px;color:var(--brand);text-decoration:none";
+  link.textContent = "远程查看";
+  row.appendChild(name); row.appendChild(lang); row.appendChild(typ); row.appendChild(sz);
+  row.appendChild(prog); row.appendChild(btn); row.appendChild(link);
+  return row;
+}
+
+function makeSection(title, contentEl, collapsed){
+  const sec = document.createElement("div");
+  sec.style.cssText="margin:12px 0";
+  const head = document.createElement("div");
+  head.style.cssText="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:14px;color:var(--ink);user-select:none;padding:6px 10px;background:#f2f4f7;border-radius:6px";
+  const arrow = document.createElement("span");
+  arrow.textContent = collapsed ? "▸" : "▾";
+  arrow.style.cssText="display:inline-block;width:14px;color:var(--muted)";
+  const t = document.createElement("span"); t.textContent = title;
+  head.appendChild(arrow); head.appendChild(t);
+  const body = document.createElement("div");
+  body.style.cssText="margin-top:6px;padding-left:8px";
+  if(collapsed) body.style.display="none";
+  body.appendChild(contentEl);
+  head.addEventListener("click", ()=>{
+    const hidden = body.style.display==="none";
+    body.style.display = hidden ? "block" : "none";
+    arrow.textContent = hidden ? "▾" : "▸";
+  });
+  sec.appendChild(head); sec.appendChild(body);
+  return sec;
+}
+
+async function downloadModel(id, progEl, btn){
+  btn.disabled = true; btn.textContent="下载中…";
+  try{
+    const r = await fetch("/api/models/download",{method:"POST",
+      headers:{"Content-Type":"application/json"}, body: JSON.stringify({id})});
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.detail||("HTTP "+r.status));
+    if(j.ok){
+      progEl.textContent = (j.size/1048576).toFixed(1)+"MB"+(j.sha_ok?" ·SHA✓":" ·SHA✗");
+      btn.textContent="已下载";
+    }else{
+      progEl.textContent="失败";
+      btn.disabled=false; btn.textContent="重试";
+      showErr("#settingsStatus","下载失败："+ (j.error||"未知错误"));
+    }
+  }catch(e){ progEl.textContent="失败"; btn.disabled=false; btn.textContent="重试";
+    showErr("#settingsStatus","下载失败："+e.message); }
+}
+
+async function applySettings(){
+  const inf = {
+    use_det: $("#setUseDet").checked, use_cls: $("#setUseCls").checked, use_rec: $("#setUseRec").checked,
+    text_score: parseFloat($("#setScore").value),
+    intra_op_num_threads: parseInt($("#setIntra").value||"-1",10),
+    inter_op_num_threads: parseInt($("#setInter").value||"-1",10),
+  };
+  try{
+    const r = await fetch("/api/settings",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({inference:inf})});
+    if(!r.ok) throw new Error((await r.json()).detail||("HTTP "+r.status));
+    const j = await r.json();
+    SETTINGS.data = j; renderSettings();
+    const st = j.engine;
+    if(st.reload==="ok") showOk("#settingsStatus","设置已应用，引擎已重新加载。");
+    else showErr("#settingsStatus","引擎重载失败："+st.error);
+  }catch(e){ showErr("#settingsStatus","应用失败："+e.message); }
+}
+$("#btnApplySettings").addEventListener("click", applySettings);
+$("#setScore").addEventListener("input", ()=>{ $("#setScoreVal").textContent=$("#setScore").value; });
+
+async function applyModels(){
+  const sel = {det:$("#selDet").value||null, rec:$("#selRec").value||null, cls:$("#selCls").value||null};
+  // 校验所选模型是否已下载
+  const miss = Object.entries(sel).filter(([t,id])=>id && !SETTINGS.data.catalog.find(c=>c.id===id && c.local)).map(([t])=>t);
+  if(miss.length){ showErr("#modelApplyStatus","以下模型尚未下载，无法选用："+miss.join("/")); return; }
+  try{
+    const r = await fetch("/api/settings",{method:"POST",
+      headers:{"Content-Type":"application/json"}, body: JSON.stringify({selected:sel})});
+    if(!r.ok) throw new Error((await r.json()).detail||("HTTP "+r.status));
+    const j = await r.json();
+    SETTINGS.data = j; renderSettings();
+    const st = j.engine;
+    if(st.reload==="ok") showOk("#modelApplyStatus","模型已切换，引擎已重新加载。");
+    else showErr("#modelApplyStatus","引擎重载失败："+st.error);
+  }catch(e){ showErr("#modelApplyStatus","应用失败："+e.message); }
+}
+$("#btnApplyModels").addEventListener("click", applyModels);
+
+async function applyPreset(pid){
+  try{
+    const r = await fetch("/api/settings/preset",{method:"POST",
+      headers:{"Content-Type":"application/json"}, body: JSON.stringify({preset_id:pid})});
+    if(!r.ok) throw new Error((await r.json()).detail||("HTTP "+r.status));
+    const j = await r.json();
+    SETTINGS.data = j; renderSettings();
+    const st = j.engine;
+    if(st.reload==="ok") showOk("#modelApplyStatus","预设已套用，引擎已重新加载。");
+    else showErr("#modelApplyStatus","引擎重载失败："+st.error);
+  }catch(e){ showErr("#modelApplyStatus","套用失败："+e.message); }
+}
+
+function renderEngineStatus(st){
+  if(!st) return;
+  const box = $("#engineStatus");
+  const ok = st.ready;
+  box.innerHTML =
+    '<div class="meta">'+
+      '<div>状态：<b style="color:'+(ok?"var(--ok)":"var(--err)")+'">'+(ok?"就绪":"异常")+'</b></div>'+
+      '<div>检测：<b>'+esc(st.resolved.det)+'</b></div>'+
+      '<div>识别：<b>'+esc(st.resolved.rec)+'</b></div>'+
+      '<div>分类：<b>'+esc(st.resolved.cls)+'</b></div>'+
+    '</div>'+
+    (st.error ? '<div class="err-banner">'+esc(st.error)+'</div>' : '');
+}
+
+// 进入设置页时刷新
+document.querySelector('.tab[data-tab="settings"]').addEventListener("click", ()=>{ loadSettings(); });
+
+function showOk(sel,msg){ $(sel).innerHTML='<div class="ok-line">'+esc(msg)+'</div>'; }
+
+/* ---------- 识别记录：查看 / 删除 / 清空 / 导出 ---------- */
+async function loadRecords(){
+  clearErr("#recordsError");
+  try{
+    const r = await fetch("/api/records");
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    renderRecords(await r.json());
+  }catch(e){ showErr("#recordsError","加载记录失败："+e.message); }
+}
+
+let onlyIssue = false;        // 仅显示有识别异常的筛选开关
+let recordList = [];           // 当前可预览记录（已按筛选过滤），元素含 kind/id 等
+
+function renderRecords(j){
+  recordList = [];
+  // 单图记录
+  const sbox = $("#singleRecords"); sbox.innerHTML="";
+  const singles = (j.singles || []).filter(s=> !onlyIssue || (s.issues && s.issues.length));
+  if(!singles.length){
+    sbox.innerHTML='<div class="empty">暂无单图记录</div>';
+  }else{
+    const tb = document.createElement("table");
+    tb.innerHTML='<thead><tr><th>文件名</th><th>类型</th><th>时间</th><th>填充率</th><th>异常合计</th><th>关键字段</th><th>操作</th></tr></thead>';
+    const tbody = document.createElement("tbody");
+    singles.forEach(s=>{
+      const idx = recordList.length;
+      recordList.push({kind:'single', id:s.id, data:s});
+      const tr = document.createElement("tr");
+      const parts = [s.name, s.number].filter(v=>v);
+      tr.innerHTML =
+        '<td>'+esc(s.file_name||"—")+'</td>'+
+        '<td>'+esc(s.doc_type)+'</td>'+
+        '<td>'+esc(fmtTime(s.created_at))+'</td>'+
+        '<td>'+esc(s.fill_rate)+'</td>'+
+        '<td>'+(s.issues&&s.issues.length?'<span class="badge err">'+s.issues.length+'</span>':'<span class="badge ok">0</span>')+'</td>'+
+        '<td>'+esc(parts.length?parts.join(" · "):"—")+'</td>'+
+        '<td><a href="'+esc(s.vis_url||"")+'" target="_blank" style="font-size:12px;margin-right:8px">查看图</a>'+
+        '<button class="ghost" data-correct="'+idx+'">去校正</button>'+
+        '<button class="ghost" data-del="'+esc(s.id)+'">删除</button></td>';
+      tbody.appendChild(tr);
+    });
+    tb.appendChild(tbody); sbox.appendChild(tb);
+  }
+
+  // 批量记录
+  const bbox = $("#batchRecords"); bbox.innerHTML="";
+  const batches = j.batches || [];
+  if(!batches.length){
+    bbox.innerHTML='<div class="empty">暂无批量记录</div>';
+  }else{
+    batches.forEach(b=>{
+      const rows = b.rows.filter(row=> !onlyIssue || (row.issue_count>0));
+      const totalIssues = rows.reduce((a,r)=>a+(r.issue_count||0),0);
+      const card = document.createElement("div");
+      card.style.cssText="border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:10px";
+      const head = document.createElement("div");
+      head.style.cssText="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap";
+      head.innerHTML = '<b>批次 #'+esc(b.seq!=null?b.seq:"?")+'</b>'+
+        '<span class="hint">'+esc(fmtTime(b.created_at))+'</span>'+
+        '<span class="hint">'+rows.length+' 张</span>'+
+        '<span class="hint">异常 '+totalIssues+' 项</span>'+
+        '<button class="ghost" data-exp="'+esc(b.batch_id)+'">导出 CSV</button>'+
+        '<button class="ghost" data-del="batch_'+esc(b.batch_id)+'">删除</button>';
+      card.appendChild(head);
+      if(!rows.length){
+        card.innerHTML += '<div class="empty">该批次无匹配记录</div>';
+      }else{
+        const tb = document.createElement("table");
+        tb.innerHTML='<thead><tr><th>文件名</th><th>类型</th><th>填充率</th><th>异常合计</th><th>关键字段</th><th>操作</th></tr></thead>';
+        const tbody = document.createElement("tbody");
+        rows.forEach(row=>{
+          const idx = recordList.length;
+          recordList.push({kind:'batch', id:row.id, batch_id:b.batch_id, source:row.source, row});
+          const tr = document.createElement("tr");
+          const parts = [row.name, row.number].filter(v=>v);
+          tr.innerHTML =
+            '<td>'+esc(row.file_name||row.source)+'</td>'+
+            '<td>'+esc(row.doc_type)+'</td>'+
+            '<td>'+esc(row.fill_rate)+'</td>'+
+            '<td>'+(row.issue_count>0?'<span class="badge err">'+row.issue_count+'</span>':'<span class="badge ok">0</span>')+'</td>'+
+            '<td>'+esc(parts.length?parts.join(" · "):"—")+'</td>'+
+            '<td><button class="ghost" data-correct="'+idx+'">去校正</button></td>';
+          tbody.appendChild(tr);
+        });
+        tb.appendChild(tbody); card.appendChild(tb);
+      }
+      bbox.appendChild(card);
+    });
+  }
+}
+
+/* ---------- 从识别记录跳转到对应工作模式进行校正 ---------- */
+function switchTab(name){
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  const t = document.querySelector('.tab[data-tab="'+name+'"]');
+  if(t) t.classList.add("active");
+  const v = document.querySelector("#view-"+name);
+  if(v) v.classList.add("active");
+}
+
+async function gotoRecordCorrect(idx){
+  const item = recordList[idx];
+  if(!item) return;
+  if(item.kind==='single'){
+    switchTab('single');
+    renderRecord(item.data);
+    const r = document.querySelector("#view-single");
+    if(r) r.scrollIntoView({behavior:"smooth", block:"start"});
+  }else{
+    switchTab('batch');
+    try{
+      const resp = await fetch("/api/records");
+      if(!resp.ok) throw new Error("HTTP "+resp.status);
+      const d = await resp.json();
+      const b = (d.batches||[]).find(x=>x.batch_id===item.batch_id);
+      if(!b) throw new Error("未找到该批次记录");
+      renderBatch({total:b.rows.length, with_issues:b.rows.filter(x=>x.issue_count>0).length, rows:b.rows});
+      const p = document.querySelector("#batchSummaryPanel");
+      if(p) p.scrollIntoView({behavior:"smooth", block:"start"});
+    }catch(e){ showErr("#batchError","加载批次失败："+e.message); }
+  }
+}
+
+async function deleteRecord(key){
+  try{
+    const r = await fetch("/api/records/"+encodeURIComponent(key), {method:"DELETE"});
+    if(!r.ok) throw new Error((await r.json()).detail||("HTTP "+r.status));
+    loadRecords();
+  }catch(e){ showErr("#recordsError","删除失败："+e.message); }
+}
+
+async function clearRecords(){
+  if(!confirm("确认清空全部识别记录？此操作不可撤销。")) return;
+  try{
+    const r = await fetch("/api/records", {method:"DELETE"});
+    if(!r.ok) throw new Error((await r.json()).detail||("HTTP "+r.status));
+    loadRecords();
+  }catch(e){ showErr("#recordsError","清空失败："+e.message); }
+}
+
+function exportRecords(batchId){
+  window.location.href = "/api/records/export"+(batchId?"?batch_id="+encodeURIComponent(batchId):"");
+}
+
+$("#btnRefreshRecords").addEventListener("click", loadRecords);
+$("#btnClearRecords").addEventListener("click", clearRecords);
+$("#btnExportSingle").addEventListener("click", ()=>exportRecords(""));
+$("#chkOnlyIssue").addEventListener("change", e=>{ onlyIssue = e.target.checked; loadRecords(); });
+$("#singleRecords").addEventListener("click", e=>{
+  const t = e.target;
+  if(t.dataset && t.dataset.correct!==undefined){ gotoRecordCorrect(parseInt(t.dataset.correct,10)); return; }
+  const k = t.dataset && t.dataset.del;
+  if(k) deleteRecord(k);
+});
+$("#batchRecords").addEventListener("click", e=>{
+  const t = e.target, d = t.dataset || {};
+  if(d.correct!==undefined){ gotoRecordCorrect(parseInt(d.correct,10)); return; }
+  if(d.del) deleteRecord(d.del);
+  else if(d.exp) exportRecords(d.exp);
+});
+document.querySelector('.tab[data-tab="records"]').addEventListener("click", loadRecords);
+
+/* ---------- 错误提示 ---------- */
+function showErr(sel,msg){ $(sel).innerHTML='<div class="err-banner">'+esc(msg)+'</div>'; }
+function clearErr(sel){ $(sel).innerHTML=""; }
+</script>
+</body>
+</html>

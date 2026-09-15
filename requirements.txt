@@ -1,0 +1,14 @@
+# RapidOCR 可视化校对工作台 —— 运行依赖
+# 建议 Python 3.11 ~ 3.13，onnxruntime 与 RapidOCR 兼容性最佳
+
+fastapi>=0.110
+uvicorn[standard]>=0.27
+python-multipart>=0.0.9
+
+# OCR 引擎
+rapidocr>=3.9
+onnxruntime>=1.17
+
+# 图像处理
+Pillow>=10.0
+numpy>=1.24
