@@ -77,7 +77,7 @@
 - **打开 exe 即默认启用**：窗口出现时服务已自动启动并打开浏览器。
 - 两个开关：运行中「启动」按钮为**灰色不可点**；停止后「停止」按钮为灰色不可点（按状态互斥）。
 - **长时间运行**：关掉浏览器不会停服务，把窗口最小化即可常驻；要点「停止」或关闭窗口才真正退出。
-- 附带一键启停脚本：`启动exe.bat` / `停止exe.bat`。
+- 附带一键启停脚本：`launch_exe.py` / `stop_exe.py`（或直接双击解压后的 `RapidOCR桌面工具.exe`）。
 
 > **工作台在系统默认浏览器中打开**，不使用 WebView2 内嵌窗口（实测内嵌页面读不到配置信息）。控制台窗口只负责启停与状态显示。
 
@@ -97,6 +97,30 @@
 
 ---
 
+## 应用界面截图
+
+以下为工具实际运行的页面截图（Chrome headless 截取，数据来自离线 OCR 引擎真实输出）。
+
+### 单图模式 —— 上传区域
+
+![单图模式上传](assets/shot_single_empty.png)
+
+拖拽或点击「选择文件」选取身份证图片，点「识别并抽取字段」即可。
+
+### 单图模式 —— 识别结果
+
+![单图识别结果](assets/shot_single_result.png)
+
+左侧为原图与 OCR 检测框叠加可视化；右侧为结构化字段（可编辑），底部为异常校对面板。本例为正常证件（0 异常）。
+
+### 识别记录
+
+![识别记录](assets/shot_records.png)
+
+所有识别记录持久化存储，支持按异常筛选、逐条预览/校正/删除、导出 CSV。
+
+---
+
 ## 源码运行（开发/二次开发）
 
 ```bash
@@ -104,6 +128,8 @@ python -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements.txt
 .venv\Scripts\python.exe app.py
 ```
+
+> 也可直接用 `serve.py` 一键启动（自动调用 .venv 里的 Python，参数透传）：`.venv/Scripts/python.exe serve.py`。
 
 启动后访问 <http://127.0.0.1:8003/>，健康检查 <http://127.0.0.1:8003/api/healthz>。
 
@@ -132,8 +158,8 @@ python -m venv .venv
 .
 ├── app.py                     # FastAPI 后端入口（含控制台窗口 / 批量任务）
 ├── RapidOCR.spec              # PyInstaller 打包配置
-├── build_exe.bat              # 一键打包
-├── start.bat / 启动exe.bat / 停止exe.bat
+├── build_exe.py               # 一键打包（PyInstaller）
+├── serve.py / launch_exe.py / stop_exe.py   # 源码启动 / 启动 exe / 停止 exe
 ├── requirements.txt
 ├── static/
 │   └── index.html             # 单文件前端（内联 CSS/JS，零外部资源）
@@ -154,8 +180,8 @@ python -m venv .venv
 
 ## 打包分发
 
-```bat
-build_exe.bat
+```bash
+.venv/Scripts/python.exe build_exe.py
 ```
 
 产物在 `dist\RapidOCR桌面工具\`。要点：
